@@ -1,4 +1,4 @@
-# LLM provider classes for OpenAI, Anthropic, Google, Meta
+# LLM provider classes for OpenAI, Anthropic, Google, Meta, DeepSeek, and free alternatives
 import os
 import requests
 
@@ -56,3 +56,90 @@ class MetaLlamaLLM:
         resp = requests.post(self.endpoint, json=data)
         resp.raise_for_status()
         return resp.json().get("choices", [{}])[0].get("text", "").strip()
+
+
+# ============ FREE LLM OPTIONS ============
+
+class DeepSeekLLM:
+    """DeepSeek API - Free tier available with generous limits"""
+    def __init__(self, api_key=None, model="deepseek-chat"):
+        self.api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
+        self.model = model
+        self.api_url = "https://api.deepseek.com/v1/chat/completions"
+    
+    def answer(self, context):
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": context}],
+            "max_tokens": 128,
+        }
+        resp = requests.post(self.api_url, headers=headers, json=data)
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+
+
+class GroqLLM:
+    """Groq API - Free tier with fast inference on Llama, Mixtral, etc."""
+    def __init__(self, api_key=None, model="llama-3.3-70b-versatile"):
+        self.api_key = api_key or os.getenv("GROQ_API_KEY")
+        self.model = model
+        self.api_url = "https://api.groq.com/openai/v1/chat/completions"
+    
+    def answer(self, context):
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": context}],
+            "max_tokens": 128,
+        }
+        resp = requests.post(self.api_url, headers=headers, json=data)
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+
+
+class TogetherLLM:
+    """Together AI - Free tier with many open-source models"""
+    def __init__(self, api_key=None, model="meta-llama/Llama-3.3-70B-Instruct-Turbo"):
+        self.api_key = api_key or os.getenv("TOGETHER_API_KEY")
+        self.model = model
+        self.api_url = "https://api.together.xyz/v1/chat/completions"
+    
+    def answer(self, context):
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": context}],
+            "max_tokens": 128,
+        }
+        resp = requests.post(self.api_url, headers=headers, json=data)
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+
+
+class OllamaLLM:
+    """Ollama - Run models locally for free (requires Ollama installed)"""
+    def __init__(self, endpoint=None, model="llama3.2"):
+        self.endpoint = endpoint or os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
+        self.model = model
+        self.api_url = f"{self.endpoint}/api/chat"
+    
+    def answer(self, context):
+        data = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": context}],
+            "stream": False,
+        }
+        resp = requests.post(self.api_url, json=data)
+        resp.raise_for_status()
+        return resp.json()["message"]["content"].strip()
+

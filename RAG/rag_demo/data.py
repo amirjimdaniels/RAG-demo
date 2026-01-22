@@ -23,7 +23,14 @@ GROUND_TRUTH = [
 
 def embed(text):
     # Simple bag-of-words embedding (for demo only)
-    vocab = ["paris", "france", "jupiter", "planet", "water", "boils", "100", "degrees", "celsius", "author", "1984", "george", "orwell", "speed", "light", "299792", "km", "second"]
+    # Extended vocabulary to better match questions to documents
+    vocab = [
+        "paris", "france", "capital",  # France question
+        "jupiter", "planet", "largest",  # Jupiter question
+        "water", "boils", "boiling", "100", "degrees", "celsius", "point",  # Water question
+        "author", "1984", "george", "orwell", "wrote", "write",  # 1984 question
+        "speed", "light", "fast", "299", "792", "km", "second"  # Light question
+    ]
     vec = [0]*len(vocab)
     for i, word in enumerate(vocab):
         if word in text.lower():

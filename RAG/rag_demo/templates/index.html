@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Demo - Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .panel-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .panel-header .subtitle {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .no-rag .panel-header {
+            border-bottom-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .with-rag .panel-header {
+            border-bottom-color: rgba(78, 205, 196, 0.3);
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid #888;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .result-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-card.correct {
+            border-left-color: #4ecdc4;
+        }
+
+        .result-card.incorrect {
+            border-left-color: #ff6b6b;
+        }
+
+        .question {
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .answer {
+            color: #e0e0e0;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .ground-truth {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .ground-truth span {
+            color: #4ecdc4;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge.correct {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+        }
+
+        .status-badge.incorrect {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .accuracy-bar {
+            margin-top: auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .accuracy-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .accuracy-value {
+            font-size: 3rem;
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+
+        .accuracy-value.high {
+            color: #4ecdc4;
+            text-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
+        }
+
+        .accuracy-value.low {
+            color: #ff6b6b;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .run-button {
+            display: block;
+            width: 200px;
+            margin: 0 auto 30px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, #7b2cbf, #00d4ff);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .run-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 25px rgba(123, 44, 191, 0.4);
+        }
+
+        .run-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .comparison-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #888;
+            padding: 20px 0;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .llm-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .llm-selector label {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .llm-selector select {
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .llm-selector select:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .llm-selector select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        .current-provider {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .current-provider span {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 RAG Demo Comparison</h1>
+    
+    <div class="controls">
+        <div class="llm-selector">
+            <label for="llm-select">LLM Provider:</label>
+            <select id="llm-select">
+                <option value="dummy">Dummy (No API)</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="groq">Groq (Free)</option>
+                <option value="together">Together AI</option>
+                <option value="ollama">Ollama (Local)</option>
+            </select>
+        </div>
+        <button class="run-button" onclick="runComparison()">Run Comparison</button>
+    </div>
+
+    <div class="current-provider" id="current-provider"></div>
+
+    <div class="container">
+        <div class="panel no-rag">
+            <div class="panel-header">
+                <h2>❌ Without RAG</h2>
+                <p class="subtitle">Naive keyword matching</p>
+            </div>
+            <div class="results" id="no-rag-results">
+                <div class="loading">
+                    <p>Click "Run Comparison" to start</p>
+                </div>
+            </div>
+            <div class="accuracy-bar">
+                <div class="accuracy-label">Accuracy</div>
+                <div class="accuracy-value" id="no-rag-accuracy">--%</div>
+            </div>
+        </div>
+
+        <div class="panel with-rag">
+            <div class="panel-header">
+                <h2>✅ With RAG</h2>
+                <p class="subtitle">Semantic retrieval with embeddings</p>
+            </div>
+            <div class="results" id="rag-results">
+                <div class="loading">
+                    <p>Click "Run Comparison" to start</p>
+                </div>
+            </div>
+            <div class="accuracy-bar">
+                <div class="accuracy-label">Accuracy</div>
+                <div class="accuracy-value" id="rag-accuracy">--%</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function runComparison() {
+            const button = document.querySelector('.run-button');
+            const llmSelect = document.getElementById('llm-select');
+            const provider = llmSelect.value;
+            
+            button.disabled = true;
+            button.textContent = 'Running...';
+
+            // Show loading state
+            document.getElementById('no-rag-results').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Processing with ${provider}...</p>
+                </div>
+            `;
+            document.getElementById('rag-results').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Processing with ${provider}...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/api/compare?llm=${provider}`);
+                const data = await response.json();
+
+                // Show which provider was used
+                document.getElementById('current-provider').innerHTML = 
+                    `Using LLM: <span>${data.provider}</span>`;
+
+                // Render results with animation delay
+                renderResults('no-rag-results', data.no_rag.results);
+                renderResults('rag-results', data.rag.results);
+
+                // Update accuracy with color coding
+                updateAccuracy('no-rag-accuracy', data.no_rag.accuracy, data.rag.accuracy);
+                updateAccuracy('rag-accuracy', data.rag.accuracy, data.no_rag.accuracy);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('no-rag-results').innerHTML = `
+                    <div class="loading"><p>Error: ${error.message}</p></div>
+                `;
+                document.getElementById('rag-results').innerHTML = `
+                    <div class="loading"><p>Error: ${error.message}</p></div>
+                `;
+            }
+
+            button.disabled = false;
+            button.textContent = 'Run Again';
+        }
+
+        function renderResults(containerId, results) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const card = document.createElement('div');
+                card.className = `result-card ${result.correct ? 'correct' : 'incorrect'}`;
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                card.innerHTML = `
+                    <div class="question">
+                        Q${index + 1}: ${result.question}
+                        <span class="status-badge ${result.correct ? 'correct' : 'incorrect'}">
+                            ${result.correct ? '✓ Correct' : '✗ Wrong'}
+                        </span>
+                    </div>
+                    <div class="answer">${result.answer}</div>
+                    <div class="ground-truth">Expected: <span>${result.ground_truth}</span></div>
+                `;
+                
+                container.appendChild(card);
+
+                // Animate in
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.3s, transform 0.3s';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        }
+
+        function updateAccuracy(elementId, accuracy, otherAccuracy) {
+            const element = document.getElementById(elementId);
+            const percentage = Math.round(accuracy * 100);
+            
+            // Determine if this is higher or lower
+            const isHigher = accuracy >= otherAccuracy;
+            element.className = `accuracy-value ${isHigher ? 'high' : 'low'}`;
+            
+            // Animate the number
+            let current = 0;
+            const increment = percentage / 20;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= percentage) {
+                    current = percentage;
+                    clearInterval(timer);
+                }
+                element.textContent = `${Math.round(current)}%`;
+            }, 50);
+        }
+    </script>
+</body>
+</html>

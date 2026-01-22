@@ -4,17 +4,15 @@ import os
 from retriever_numpy import NumpyRetriever
 from retriever_minimal import MinimalRetriever
 from data import DATA, QUESTIONS, GROUND_TRUTH
-from llms import OpenAILLM, AnthropicLLM, GoogleLLM, MetaLlamaLLM
+from llms import OpenAILLM, AnthropicLLM, GoogleLLM, MetaLlamaLLM, DeepSeekLLM, GroqLLM, TogetherLLM, OllamaLLM
 
-# Dummy LLM: returns first sentence containing a keyword
+# Dummy LLM: returns the context as-is (simulates an LLM that uses retrieved context)
 class DummyLLM:
-    def __init__(self, data):
-        self.data = data
-    def answer(self, question):
-        for doc in self.data:
-            if any(word in doc.lower() for word in question.lower().split()):
-                return doc
-        return "I don't know."
+    def __init__(self, data=None):
+        pass
+    def answer(self, context):
+        # Simply return the retrieved context as the answer
+        return context
 
 def evaluate(llm, retriever, questions, ground_truth):
     correct = 0
@@ -37,6 +35,14 @@ def get_llm(provider: str):
         return GoogleLLM()
     elif provider == "meta":
         return MetaLlamaLLM()
+    elif provider == "deepseek":
+        return DeepSeekLLM()
+    elif provider == "groq":
+        return GroqLLM()
+    elif provider == "together":
+        return TogetherLLM()
+    elif provider == "ollama":
+        return OllamaLLM()
     elif provider == "dummy":
         return DummyLLM(DATA)
     else:
