@@ -283,9 +283,70 @@
             font-weight: 600;
         }
 
+        .api-key-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .api-key-input label {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .api-key-input input {
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            outline: none;
+            width: 280px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .api-key-input input:hover,
+        .api-key-input input:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .api-key-input input::placeholder {
+            color: #666;
+        }
+
+        .api-key-hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .api-key-links {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .api-key-links a {
+            color: #00d4ff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .api-key-links a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 900px) {
             .container {
                 flex-direction: column;
+            }
+            .controls {
+                flex-direction: column;
+            }
+            .api-key-input input {
+                width: 100%;
             }
         }
     </style>
@@ -293,16 +354,27 @@
 <body>
     <h1>🔍 RAG Demo Comparison</h1>
     
+    <div class="api-key-links">
+        Get free API keys: 
+        <a href="https://console.groq.com" target="_blank">Groq (Free)</a> |
+        <a href="https://platform.deepseek.com" target="_blank">DeepSeek</a> |
+        <a href="https://api.together.xyz" target="_blank">Together AI</a>
+    </div>
+
     <div class="controls">
         <div class="llm-selector">
             <label for="llm-select">LLM Provider:</label>
-            <select id="llm-select">
+            <select id="llm-select" onchange="updateApiKeyPlaceholder()">
                 <option value="dummy">Dummy (No API)</option>
                 <option value="deepseek">DeepSeek</option>
                 <option value="groq">Groq (Free)</option>
                 <option value="together">Together AI</option>
                 <option value="ollama">Ollama (Local)</option>
             </select>
+        </div>
+        <div class="api-key-input">
+            <label for="api-key">API Key:</label>
+            <input type="password" id="api-key" placeholder="Not needed for Dummy/Ollama">
         </div>
         <button class="run-button" onclick="runComparison()">Run Comparison</button>
     </div>
@@ -344,10 +416,31 @@
     </div>
 
     <script>
+        function updateApiKeyPlaceholder() {
+            const provider = document.getElementById('llm-select').value;
+            const apiKeyInput = document.getElementById('api-key');
+            
+            if (provider === 'dummy' || provider === 'ollama') {
+                apiKeyInput.placeholder = 'Not needed for ' + (provider === 'dummy' ? 'Dummy' : 'Ollama');
+                apiKeyInput.disabled = true;
+            } else {
+                apiKeyInput.placeholder = 'Paste your ' + provider.charAt(0).toUpperCase() + provider.slice(1) + ' API key';
+                apiKeyInput.disabled = false;
+            }
+        }
+
         async function runComparison() {
             const button = document.querySelector('.run-button');
             const llmSelect = document.getElementById('llm-select');
+            const apiKeyInput = document.getElementById('api-key');
             const provider = llmSelect.value;
+            const apiKey = apiKeyInput.value.trim();
+            
+            // Validate API key for providers that need it
+            if (provider !== 'dummy' && provider !== 'ollama' && !apiKey) {
+                alert('Please enter an API key for ' + provider);
+                return;
+            }
             
             button.disabled = true;
             button.textContent = 'Running...';
@@ -367,7 +460,10 @@
             `;
 
             try {
-                const response = await fetch(`/api/compare?llm=${provider}`);
+                const params = new URLSearchParams({ llm: provider });
+                if (apiKey) params.append('api_key', apiKey);
+                
+                const response = await fetch(`/api/compare?${params}`);
                 const data = await response.json();
 
                 // Show which provider was used
@@ -395,6 +491,9 @@
             button.disabled = false;
             button.textContent = 'Run Again';
         }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', updateApiKeyPlaceholder);
 
         function renderResults(containerId, results) {
             const container = document.getElementById(containerId);

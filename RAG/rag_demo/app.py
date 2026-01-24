@@ -12,15 +12,15 @@ class DummyLLM:
     def answer(self, context):
         return context
 
-def get_llm(provider: str):
+def get_llm(provider: str, api_key: str = None):
     """Get LLM instance based on provider name"""
     provider = provider.lower()
     if provider == "deepseek":
-        return DeepSeekLLM()
+        return DeepSeekLLM(api_key=api_key) if api_key else DeepSeekLLM()
     elif provider == "groq":
-        return GroqLLM()
+        return GroqLLM(api_key=api_key) if api_key else GroqLLM()
     elif provider == "together":
-        return TogetherLLM()
+        return TogetherLLM(api_key=api_key) if api_key else TogetherLLM()
     elif provider == "ollama":
         return OllamaLLM()
     else:
@@ -78,9 +78,10 @@ def index():
 
 @app.route('/api/compare')
 def compare():
-    # Get LLM provider from query param or environment
+    # Get LLM provider and API key from query params
     provider = request.args.get('llm', os.getenv('LLM_PROVIDER', 'dummy'))
-    llm = get_llm(provider)
+    api_key = request.args.get('api_key', '')
+    llm = get_llm(provider, api_key if api_key else None)
     use_real_llm = provider != 'dummy'
     
     # Without RAG (naive keyword matching)
