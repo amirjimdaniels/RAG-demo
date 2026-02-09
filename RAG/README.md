@@ -35,6 +35,7 @@ Currently uses a **DummyLLM** that returns retrieved context as-is - no actual L
 | **Groq** | ✅ Yes | [Get Key](https://console.groq.com/) | Very fast inference, Llama 3.3 70B free |
 | **Together AI** | ✅ $5 credit | [Get Key](https://api.together.xyz/) | Many open-source models |
 | **Ollama** | ✅ 100% Free | None (local) | Run models locally, requires [Ollama](https://ollama.ai/) |
+| **MiniMax** | ✅ Free tier | [Get Key](https://api.minimax.chat/) | MiniMax-M2.1 model |
 | **Google Gemini** | ✅ Free tier | [Get Key](https://makersuite.google.com/app/apikey) | 60 requests/min free |
 
 ### Using Free LLMs
@@ -47,6 +48,10 @@ python rag_demo/main.py deepseek
 # Groq (fast & free)
 export GROQ_API_KEY=your_key
 python rag_demo/main.py groq
+
+# MiniMax (free tier)
+export MINIMAX_API_KEY=your_key
+python rag_demo/main.py minimax
 
 # Together AI ($5 free credit)
 export TOGETHER_API_KEY=your_key
@@ -77,27 +82,66 @@ python rag_demo/main.py google
 
 ```
 rag_demo/
-├── app.py              # Flask web UI for comparison
-├── main.py             # CLI demo script
-├── data.py             # Sample dataset & embeddings
-├── llms.py             # LLM provider classes (all options)
-├── retriever_numpy.py  # Vector search with numpy
-├── retriever_minimal.py # Lightweight cosine similarity
+├── __init__.py          # Package marker
+├── app.py               # Flask web UI for comparison
+├── main.py              # CLI demo script
+├── data.py              # Sample dataset, questions & ground truth
+├── embeddings.py        # TF-IDF vectorization utilities
+├── evaluation.py        # Shared prompt building, LLM-as-judge, scoring
+├── llms.py              # LLM provider classes (base class + all providers)
+├── retriever_numpy.py   # Vector search with NumPy
+├── retriever_minimal.py # Lightweight pure-Python cosine similarity
 └── templates/
-    └── index.html      # Web UI template
+    └── index.html       # Web UI template
 ```
 
 ## 🔧 How It Works
 
-1. **Embedding**: Questions and documents are converted to bag-of-words vectors
-2. **Retrieval**: Cosine similarity finds the most relevant document
-3. **Generation**: The LLM (or DummyLLM) uses the retrieved context to answer
+This demo implements several modern RAG techniques:
 
-The key insight: **good retrieval = good answers**, even with a simple LLM.
+1. **Embedding**: Questions and documents are converted to vector representations. By default, a SentenceTransformer model (e.g., `BAAI/bge-small-en-v1.5`) is used for semantic search, but it can fall back to TF-IDF if unavailable.
+2. **Chunking**: Documents are split into overlapping chunks or sentences to improve retrieval granularity.
+3. **Retrieval**: Cosine similarity is used to find the most relevant chunks for a given question. NumPy-accelerated and pure-Python retrievers are both available.
+4. **Reranking (Cross-Encoder)**: Optionally, a cross-encoder model (e.g., `cross-encoder/ms-marco-MiniLM-L-6-v2`) reranks the top retrieved chunks for higher accuracy.
+5. **Two-Pass Retrieval (Query Expansion)**: For real LLMs, the system can use a two-pass approach: it first retrieves context and gets an initial answer, then asks the LLM to generate an improved search query, and retrieves again with this expanded query.
+6. **Map-Reduce Retrieval**: For large documents, the system retrieves all relevant chunks above a similarity threshold, summarizes each chunk with the LLM (map), and then combines or further summarizes these summaries (reduce) to produce a focused context.
+7. **Generation**: The LLM (or DummyLLM) uses the retrieved context to answer the question.
+
+The key insight: **good retrieval = good answers**, even with a simple LLM. Advanced strategies like reranking and multi-step retrieval further boost answer quality, especially on long or complex documents.
 
 ## Requirements
 
 - Python 3.8+
+- flask
 - numpy
+- python-dotenv
 - requests
-- flask (for web UI)
+- scikit-learn
+
+## 🔐 API Key Storage (Local Only)
+
+The web UI stores API keys **in a client-side cookie** (per provider) so you don't have to re-enter them.
+When you run the app locally (http://localhost:5000), the server also **writes the key to a local .env** file
+the first time you use it in the UI. This keeps keys on your machine and avoids committing secrets.
+
+**Important:**
+- Do not commit .env to source control.
+- Cookies are stored locally in your browser (SameSite=Lax).
+
+## 🔄 Restarting the Server
+
+To restart the web server after making changes or if you encounter issues:
+
+1. **Stop the server**: Press `Ctrl+C` in the terminal where the server is running.
+2. **(Optional) Clear cache**: Delete any `__pycache__` folders if you want a clean state.
+3. **Start the server**:
+   ```bash
+   cd rag_demo
+   python app.py
+   ```
+   Then open [http://localhost:5000](http://localhost:5000) in your browser.
+
+If you see errors on startup:
+- Ensure all dependencies are installed: `pip install -r requirements.txt`
+- If you deleted or modified files in `rag_demo/templates/`, restore them or re-copy from backup.
+- Check that your Python environment is activated (if using a virtualenv).

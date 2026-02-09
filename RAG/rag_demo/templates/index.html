@@ -3,550 +3,954 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG Demo - Comparison</title>
+    <title>RAG Demo</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
             color: #fff;
-            padding: 20px;
+            padding: 20px 20px 60px;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5rem;
+            margin-bottom: 8px;
+            font-size: 2.2rem;
             background: linear-gradient(90deg, #00d4ff, #7b2cbf);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .container {
-            display: flex;
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .panel {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .panel-header {
+        .subtitle {
             text-align: center;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .panel-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-
-        .panel-header .subtitle {
             color: #888;
             font-size: 0.9rem;
+            margin-bottom: 25px;
         }
 
-        .no-rag .panel-header {
-            border-bottom-color: rgba(255, 107, 107, 0.3);
-        }
-
-        .with-rag .panel-header {
-            border-bottom-color: rgba(78, 205, 196, 0.3);
-        }
-
-        .results {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .result-card {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 15px;
-            border-left: 4px solid #888;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .result-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .result-card.correct {
-            border-left-color: #4ecdc4;
-        }
-
-        .result-card.incorrect {
-            border-left-color: #ff6b6b;
-        }
-
-        .question {
-            font-weight: 600;
-            color: #00d4ff;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-        }
-
-        .answer {
-            color: #e0e0e0;
-            margin-bottom: 8px;
-            padding: 8px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-            font-size: 0.9rem;
-        }
-
-        .ground-truth {
-            font-size: 0.85rem;
-            color: #888;
-        }
-
-        .ground-truth span {
-            color: #4ecdc4;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        .status-badge.correct {
-            background: rgba(78, 205, 196, 0.2);
-            color: #4ecdc4;
-        }
-
-        .status-badge.incorrect {
-            background: rgba(255, 107, 107, 0.2);
-            color: #ff6b6b;
-        }
-
-        .accuracy-bar {
-            margin-top: auto;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .accuracy-label {
-            font-size: 0.9rem;
-            color: #888;
-            margin-bottom: 10px;
-        }
-
-        .accuracy-value {
-            font-size: 3rem;
-            font-weight: 700;
-            transition: color 0.3s;
-        }
-
-        .accuracy-value.high {
-            color: #4ecdc4;
-            text-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
-        }
-
-        .accuracy-value.low {
-            color: #ff6b6b;
-            text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #888;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #00d4ff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .run-button {
-            display: block;
-            width: 200px;
-            margin: 0 auto 30px;
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(90deg, #7b2cbf, #00d4ff);
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .run-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 25px rgba(123, 44, 191, 0.4);
-        }
-
-        .run-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .comparison-arrow {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: #888;
-            padding: 20px 0;
-        }
-
+        /* --- Controls --- */
         .controls {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 15px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
         }
 
-        .llm-selector {
+        .controls label { color: #888; font-size: 0.9rem; }
+
+        .controls select, .controls input[type="password"] {
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .controls select:hover, .controls input:hover,
+        .controls select:focus, .controls input:focus {
+            border-color: rgba(255,255,255,0.4);
+        }
+        .controls select option { background: #1a1a2e; }
+        .controls input::placeholder { color: #555; }
+
+        /* --- Question input --- */
+        .question-area {
+            max-width: 900px;
+            margin: 0 auto 20px;
+        }
+
+        .question-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .question-input-row input[type="text"] {
+            flex: 1;
+            padding: 14px 20px;
+            font-size: 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .question-input-row input[type="text"]:focus {
+            border-color: #00d4ff;
+        }
+        .question-input-row input[type="text"]::placeholder { color: #555; }
+
+        .btn {
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+            white-space: nowrap;
+        }
+        .btn:hover { transform: scale(1.03); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #7b2cbf, #00d4ff);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-weight: 400;
+            font-size: 0.85rem;
+            padding: 8px 18px;
+        }
+
+        /* --- Example questions --- */
+        .examples {
+            max-width: 900px;
+            margin: 0 auto 25px;
+        }
+        .examples-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .examples-header span { color: #888; font-size: 0.85rem; }
+        .example-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .example-chip {
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #ccc;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .example-chip:hover {
+            background: rgba(0,212,255,0.1);
+            border-color: rgba(0,212,255,0.3);
+            color: #fff;
+        }
+        .example-chip.used {
+            opacity: 0.4;
+        }
+
+        /* --- Result card --- */
+        .result-area {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .result-card {
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 20px;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-question {
+            padding: 16px 20px;
+            font-weight: 600;
+            color: #00d4ff;
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
             display: flex;
             align-items: center;
             gap: 10px;
         }
+        .result-question .q-number {
+            background: rgba(0,212,255,0.15);
+            color: #00d4ff;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
 
-        .llm-selector label {
+        /* Pipeline visualization */
+        .pipeline {
+            padding: 20px;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .pipeline-step:last-child { margin-bottom: 0; }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        .step-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             color: #888;
-            font-size: 0.95rem;
+            margin-bottom: 4px;
         }
 
-        .llm-selector select {
-            padding: 12px 20px;
-            font-size: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            cursor: pointer;
-            outline: none;
-            transition: border-color 0.2s, background 0.2s;
+        .step-body {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
 
-        .llm-selector select:hover {
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.15);
+        /* Retrieved context step */
+        .step-retrieval .step-icon {
+            background: rgba(255,193,7,0.15);
+            color: #ffc107;
+        }
+        .step-retrieval .step-body {
+            background: rgba(255,193,7,0.06);
+            border: 1px solid rgba(255,193,7,0.15);
+            color: #e0d6a8;
+            font-style: italic;
         }
 
-        .llm-selector select option {
-            background: #1a1a2e;
-            color: #fff;
+        /* Answer columns */
+        .answers-row {
+            display: flex;
+            gap: 16px;
+        }
+        .answer-col { flex: 1; }
+
+        .step-no-rag .step-icon {
+            background: rgba(255,107,107,0.15);
+            color: #ff6b6b;
+        }
+        .step-no-rag .step-body {
+            background: rgba(255,107,107,0.06);
+            border: 1px solid rgba(255,107,107,0.15);
+            color: #e0e0e0;
         }
 
-        .current-provider {
-            text-align: center;
-            margin-bottom: 20px;
+        .step-rag .step-icon {
+            background: rgba(78,205,196,0.15);
+            color: #4ecdc4;
+        }
+        .step-rag .step-body {
+            background: rgba(78,205,196,0.06);
+            border: 1px solid rgba(78,205,196,0.15);
+            color: #e0e0e0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .badge-correct { background: rgba(78,205,196,0.2); color: #4ecdc4; }
+        .badge-wrong   { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+
+        .ground-truth {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 6px;
+            padding: 0 20px 16px;
+        }
+        .ground-truth span { color: #4ecdc4; }
+
+        /* --- Score bar --- */
+        .score-bar {
+            max-width: 1100px;
+            margin: 0 auto 20px;
+            display: none;
+            justify-content: center;
+            gap: 40px;
+            padding: 16px 24px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 14px;
+        }
+        .score-bar.visible { display: flex; }
+        .score-item { text-align: center; }
+        .score-label { font-size: 0.8rem; color: #888; margin-bottom: 4px; }
+        .score-value { font-size: 2rem; font-weight: 700; }
+        .score-value.high { color: #4ecdc4; }
+        .score-value.low  { color: #ff6b6b; }
+        .score-value.neutral { color: #888; }
+
+        /* --- Loading --- */
+        .loading-inline {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             color: #888;
             font-size: 0.9rem;
         }
+        .spinner-sm {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .current-provider span {
-            color: #00d4ff;
-            font-weight: 600;
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #555;
+            font-size: 0.95rem;
         }
 
-        .api-key-input {
+        /* --- Document panel --- */
+        .doc-panel {
+            max-width: 900px;
+            margin: 0 auto 22px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .doc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .doc-header:hover { background: rgba(255,255,255,0.03); }
+        .doc-header-left {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-
-        .api-key-input label {
-            color: #888;
-            font-size: 0.95rem;
+        .doc-header-left .doc-icon {
+            font-size: 1.1rem;
         }
-
-        .api-key-input input {
-            padding: 12px 20px;
-            font-size: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            outline: none;
-            width: 280px;
-            transition: border-color 0.2s, background 0.2s;
+        .doc-header-left .doc-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ccc;
         }
-
-        .api-key-input input:hover,
-        .api-key-input input:focus {
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.15);
+        .doc-header-left .doc-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 8px;
+            background: rgba(0,212,255,0.12);
+            color: #00d4ff;
         }
-
-        .api-key-input input::placeholder {
-            color: #666;
-        }
-
-        .api-key-hint {
+        .doc-toggle {
             font-size: 0.8rem;
             color: #666;
-            margin-top: 5px;
+            transition: transform 0.2s;
         }
-
-        .api-key-links {
+        .doc-toggle.open { transform: rotate(180deg); }
+        .doc-body {
+            display: none;
+            padding: 0 18px 16px;
+        }
+        .doc-body.open { display: block; }
+        .doc-preview {
+            font-size: 0.8rem;
+            color: #888;
+            line-height: 1.5;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            max-height: 80px;
+            overflow: hidden;
+        }
+        .doc-dropzone {
+            border: 1px dashed rgba(255,255,255,0.25);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
             text-align: center;
-            margin-bottom: 10px;
+            background: rgba(0,0,0,0.18);
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .doc-dropzone.drag {
+            border-color: rgba(0,212,255,0.6);
+            background: rgba(0,212,255,0.08);
+        }
+        .doc-drop-title {
             font-size: 0.85rem;
+            color: #bbb;
+            margin-bottom: 4px;
+        }
+        .doc-drop-sub {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .doc-file-name {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+        .doc-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.25);
+            color: #ddd;
+            outline: none;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        .doc-textarea:focus { border-color: #7b2cbf; }
+        .doc-textarea::placeholder { color: #555; }
+        .doc-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .doc-status {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: auto;
         }
 
-        .api-key-links a {
-            color: #00d4ff;
-            text-decoration: none;
-            margin: 0 10px;
-        }
-
-        .api-key-links a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 900px) {
-            .container {
-                flex-direction: column;
-            }
-            .controls {
-                flex-direction: column;
-            }
-            .api-key-input input {
-                width: 100%;
-            }
+        /* --- Responsive --- */
+        @media (max-width: 700px) {
+            .controls { flex-direction: column; }
+            .answers-row { flex-direction: column; }
+            .question-input-row { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <h1>🔍 RAG Demo Comparison</h1>
-    
-    <div class="api-key-links">
-        Get free API keys: 
-        <a href="https://console.groq.com" target="_blank">Groq (Free)</a> |
-        <a href="https://platform.deepseek.com" target="_blank">DeepSeek</a> |
-        <a href="https://api.together.xyz" target="_blank">Together AI</a>
-    </div>
+    <h1>RAG Demo</h1>
+    <p class="subtitle">See how Retrieval-Augmented Generation improves LLM answers</p>
 
     <div class="controls">
-        <div class="llm-selector">
-            <label for="llm-select">LLM Provider:</label>
-            <select id="llm-select" onchange="updateApiKeyPlaceholder()">
-                <option value="dummy">Dummy (No API)</option>
-                <option value="deepseek">DeepSeek</option>
-                <option value="groq">Groq (Free)</option>
-                <option value="together">Together AI</option>
-                <option value="ollama">Ollama (Local)</option>
-            </select>
-        </div>
-        <div class="api-key-input">
-            <label for="api-key">API Key:</label>
-            <input type="password" id="api-key" placeholder="Not needed for Dummy/Ollama">
-        </div>
-        <button class="run-button" onclick="runComparison()">Run Comparison</button>
+        <label for="llm-select">LLM:</label>
+        <select id="llm-select" onchange="onProviderChange()">
+            <option value="dummy">Dummy (No API)</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="groq">Groq</option>
+            <option value="together">Together AI</option>
+            <option value="ollama" selected>Ollama (Local)</option>
+            <option value="minimax">MiniMax</option>
+        </select>
+        <label for="api-key">API Key:</label>
+        <input type="password" id="api-key" placeholder="Not needed for Ollama" disabled>
     </div>
 
-    <div class="current-provider" id="current-provider"></div>
-
-    <div class="container">
-        <div class="panel no-rag">
-            <div class="panel-header">
-                <h2>❌ Without RAG</h2>
-                <p class="subtitle">Naive keyword matching</p>
+    <div class="doc-panel">
+        <div class="doc-header" onclick="toggleDocPanel()">
+            <div class="doc-header-left">
+                <span class="doc-icon">&#128196;</span>
+                <span class="doc-title">Knowledge Base</span>
+                <span class="doc-badge" id="doc-badge">Default</span>
             </div>
-            <div class="results" id="no-rag-results">
-                <div class="loading">
-                    <p>Click "Run Comparison" to start</p>
-                </div>
-            </div>
-            <div class="accuracy-bar">
-                <div class="accuracy-label">Accuracy</div>
-                <div class="accuracy-value" id="no-rag-accuracy">--%</div>
-            </div>
+            <span class="doc-toggle" id="doc-toggle">&#9660;</span>
         </div>
-
-        <div class="panel with-rag">
-            <div class="panel-header">
-                <h2>✅ With RAG</h2>
-                <p class="subtitle">Semantic retrieval with embeddings</p>
+        <div class="doc-body" id="doc-body">
+            <div class="doc-preview" id="doc-preview">Loading...</div>
+            <div class="doc-dropzone" id="doc-dropzone">
+                <div class="doc-drop-title">Drag and drop a .txt, .md, .pdf, or .docx</div>
+                <div class="doc-drop-sub">PDFs limited to 20 pages</div>
+                <button class="btn btn-secondary" type="button" onclick="triggerFilePicker()">Choose File</button>
+                <input type="file" id="doc-file-input" accept=".txt,.md,.pdf,.docx" style="display:none">
+                <div class="doc-file-name" id="doc-file-name"></div>
             </div>
-            <div class="results" id="rag-results">
-                <div class="loading">
-                    <p>Click "Run Comparison" to start</p>
-                </div>
-            </div>
-            <div class="accuracy-bar">
-                <div class="accuracy-label">Accuracy</div>
-                <div class="accuracy-value" id="rag-accuracy">--%</div>
+            <textarea class="doc-textarea" id="doc-textarea"
+                      placeholder="Paste any text here to use as the RAG knowledge base..."></textarea>
+            <div class="doc-actions">
+                <button class="btn btn-primary" style="padding:8px 20px;font-size:0.85rem;" onclick="uploadDocument()">Use This Document</button>
+                <button class="btn btn-secondary" onclick="resetDocument()">Reset to Default</button>
+                <span class="doc-status" id="doc-status"></span>
             </div>
         </div>
     </div>
 
-    <script>
-        function updateApiKeyPlaceholder() {
-            const provider = document.getElementById('llm-select').value;
-            const apiKeyInput = document.getElementById('api-key');
-            
-            if (provider === 'dummy' || provider === 'ollama') {
-                apiKeyInput.placeholder = 'Not needed for ' + (provider === 'dummy' ? 'Dummy' : 'Ollama');
-                apiKeyInput.disabled = true;
-            } else {
-                apiKeyInput.placeholder = 'Paste your ' + provider.charAt(0).toUpperCase() + provider.slice(1) + ' API key';
-                apiKeyInput.disabled = false;
-            }
+    <div class="question-area">
+        <div class="question-input-row">
+            <input type="text" id="question-input"
+                   placeholder="Ask a question about the document above..."
+                   onkeydown="if(event.key==='Enter') askQuestion()">
+            <button class="btn btn-primary" id="ask-btn" onclick="askQuestion()">Ask</button>
+        </div>
+    </div>
+
+    <div class="examples" id="examples-area">
+        <div class="examples-header">
+            <span>Try an example:</span>
+            <button class="btn btn-secondary" id="run-all-btn" onclick="runAll()">Run All Examples</button>
+        </div>
+        <div class="example-chips" id="example-chips"></div>
+    </div>
+
+    <div class="score-bar" id="score-bar">
+        <div class="score-item">
+            <div class="score-label">Without RAG</div>
+            <div class="score-value" id="score-no-rag">--%</div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">Questions</div>
+            <div class="score-value neutral" id="score-count">0</div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">With RAG</div>
+            <div class="score-value" id="score-rag">--%</div>
+        </div>
+    </div>
+
+    <div class="result-area" id="result-area">
+        <div class="empty-state" id="empty-state">
+            Ask a question or click an example to see RAG in action.
+        </div>
+    </div>
+
+<script>
+    let exampleQuestions = [];
+    let scores = { noRag: 0, rag: 0, total: 0 };
+    let questionNumber = 0;
+    let runningAll = false;
+
+    // --- Cookie helpers ---
+    function setCookie(n, v, d) {
+        document.cookie = `${n}=${encodeURIComponent(v)}; Max-Age=${d*86400}; Path=/; SameSite=Lax`;
+    }
+    function getCookie(n) {
+        for (const c of document.cookie.split(';').map(c => c.trim()))
+            if (c.startsWith(n + '=')) return decodeURIComponent(c.slice(n.length + 1));
+        return '';
+    }
+
+    // --- Provider / API key ---
+    function onProviderChange() {
+        const p = document.getElementById('llm-select').value;
+        const inp = document.getElementById('api-key');
+        if (p === 'dummy' || p === 'ollama') {
+            inp.placeholder = 'Not needed';
+            inp.disabled = true;
+        } else {
+            inp.placeholder = `Paste your ${p} API key`;
+            inp.disabled = false;
+            const saved = getCookie(`api_key_${p}`);
+            if (saved) inp.value = saved;
+        }
+    }
+
+    function buildParams(extra = {}) {
+        const p = document.getElementById('llm-select').value;
+        const k = document.getElementById('api-key').value.trim();
+        const params = new URLSearchParams({ llm: p, ...extra });
+        if (k && p !== 'dummy' && p !== 'ollama') {
+            params.set('api_key', k);
+            setCookie(`api_key_${p}`, k, 365);
+        }
+        return params;
+    }
+
+    // --- Load example questions ---
+    async function loadExamples() {
+        try {
+            const resp = await fetch('/api/questions');
+            exampleQuestions = await resp.json();
+            renderChips();
+        } catch (e) { console.error(e); }
+    }
+
+    function renderChips() {
+        const container = document.getElementById('example-chips');
+        container.innerHTML = '';
+        exampleQuestions.forEach((eq, i) => {
+            const chip = document.createElement('button');
+            chip.className = 'example-chip';
+            chip.textContent = eq.question;
+            chip.title = eq.question;
+            chip.onclick = () => {
+                document.getElementById('question-input').value = eq.question;
+                askQuestion(eq.ground_truth);
+                chip.classList.add('used');
+            };
+            chip.id = `chip-${i}`;
+            container.appendChild(chip);
+        });
+    }
+
+    // --- Ask a single question ---
+    async function askQuestion(groundTruth = '') {
+        const input = document.getElementById('question-input');
+        const q = input.value.trim();
+        if (!q) return;
+
+        const provider = document.getElementById('llm-select').value;
+        if (provider !== 'dummy' && provider !== 'ollama' &&
+            !document.getElementById('api-key').value.trim()) {
+            alert('Please enter an API key for ' + provider);
+            return;
         }
 
-        async function runComparison() {
-            const button = document.querySelector('.run-button');
-            const llmSelect = document.getElementById('llm-select');
-            const apiKeyInput = document.getElementById('api-key');
-            const provider = llmSelect.value;
-            const apiKey = apiKeyInput.value.trim();
-            
-            // Validate API key for providers that need it
-            if (provider !== 'dummy' && provider !== 'ollama' && !apiKey) {
-                alert('Please enter an API key for ' + provider);
-                return;
-            }
-            
-            button.disabled = true;
-            button.textContent = 'Running...';
+        const askBtn = document.getElementById('ask-btn');
+        askBtn.disabled = true;
+        askBtn.textContent = '...';
 
-            // Show loading state
-            document.getElementById('no-rag-results').innerHTML = `
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Processing with ${provider}...</p>
-                </div>
-            `;
-            document.getElementById('rag-results').innerHTML = `
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Processing with ${provider}...</p>
-                </div>
-            `;
+        // Hide empty state
+        const empty = document.getElementById('empty-state');
+        if (empty) empty.style.display = 'none';
 
-            try {
-                const params = new URLSearchParams({ llm: provider });
-                if (apiKey) params.append('api_key', apiKey);
-                
-                const response = await fetch(`/api/compare?${params}`);
-                const data = await response.json();
+        // Add loading card
+        questionNumber++;
+        const cardId = `result-${questionNumber}`;
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.id = cardId;
+        card.innerHTML = `
+            <div class="result-question">
+                <span class="q-number">Q${questionNumber}</span>
+                ${escHtml(q)}
+            </div>
+            <div class="pipeline" style="padding:20px;">
+                <div class="loading-inline"><div class="spinner-sm"></div> Thinking...</div>
+            </div>
+        `;
+        document.getElementById('result-area').prepend(card);
 
-                // Show which provider was used
-                document.getElementById('current-provider').innerHTML = 
-                    `Using LLM: <span>${data.provider}</span>`;
-
-                // Render results with animation delay
-                renderResults('no-rag-results', data.no_rag.results);
-                renderResults('rag-results', data.rag.results);
-
-                // Update accuracy with color coding
-                updateAccuracy('no-rag-accuracy', data.no_rag.accuracy, data.rag.accuracy);
-                updateAccuracy('rag-accuracy', data.rag.accuracy, data.no_rag.accuracy);
-
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('no-rag-results').innerHTML = `
-                    <div class="loading"><p>Error: ${error.message}</p></div>
-                `;
-                document.getElementById('rag-results').innerHTML = `
-                    <div class="loading"><p>Error: ${error.message}</p></div>
-                `;
-            }
-
-            button.disabled = false;
-            button.textContent = 'Run Again';
+        try {
+            const params = buildParams({ q });
+            if (groundTruth) params.set('gt', groundTruth);
+            const resp = await fetch(`/api/ask?${params}`);
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error);
+            renderResultCard(cardId, data);
+        } catch (e) {
+            card.querySelector('.pipeline').innerHTML =
+                `<div style="color:#ff6b6b;padding:10px;">Error: ${escHtml(e.message)}</div>`;
         }
-        
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', updateApiKeyPlaceholder);
 
-        function renderResults(containerId, results) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
+        askBtn.disabled = false;
+        askBtn.textContent = 'Ask';
+        if (!runningAll) input.value = '';
+    }
 
-            results.forEach((result, index) => {
-                const card = document.createElement('div');
-                card.className = `result-card ${result.correct ? 'correct' : 'incorrect'}`;
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                
-                card.innerHTML = `
-                    <div class="question">
-                        Q${index + 1}: ${result.question}
-                        <span class="status-badge ${result.correct ? 'correct' : 'incorrect'}">
-                            ${result.correct ? '✓ Correct' : '✗ Wrong'}
-                        </span>
+    function renderResultCard(cardId, data) {
+        const card = document.getElementById(cardId);
+        const hasGT = data.ground_truth != null;
+
+        // Update scores
+        if (hasGT) {
+            scores.total++;
+            if (data.no_rag_correct) scores.noRag++;
+            if (data.rag_correct) scores.rag++;
+            updateScoreBar();
+        }
+
+        const noRagBadge = hasGT
+            ? `<span class="badge ${data.no_rag_correct ? 'badge-correct' : 'badge-wrong'}">${data.no_rag_correct ? '&#10003;' : '&#10007;'}</span>`
+            : '';
+        const ragBadge = hasGT
+            ? `<span class="badge ${data.rag_correct ? 'badge-correct' : 'badge-wrong'}">${data.rag_correct ? '&#10003;' : '&#10007;'}</span>`
+            : '';
+        const gtHtml = hasGT
+            ? `<div class="ground-truth">Expected: <span>${escHtml(data.ground_truth)}</span></div>`
+            : '';
+
+        const strategyLabel = {
+            'two_pass': '2-pass',
+            'map_reduce': 'map-reduce',
+        }[data.retrieval_strategy] || '';
+        const strategyBadge = strategyLabel
+            ? ` <span class="badge badge-correct">${strategyLabel}</span>`
+            : '';
+
+        card.querySelector('.pipeline').innerHTML = `
+            <div class="pipeline-step step-retrieval">
+                <div class="step-icon">1</div>
+                <div class="step-content">
+                    <div class="step-label">Retrieved Context (what RAG found)${strategyBadge}</div>
+                    <div class="step-body">"${escHtml(data.retrieved_context)}"</div>
+                </div>
+            </div>
+
+            <div class="answers-row">
+                <div class="answer-col">
+                    <div class="pipeline-step step-no-rag">
+                        <div class="step-icon">2</div>
+                        <div class="step-content">
+                            <div class="step-label">Without RAG ${noRagBadge}</div>
+                            <div class="step-body">${escHtml(data.no_rag_answer)}</div>
+                        </div>
                     </div>
-                    <div class="answer">${result.answer}</div>
-                    <div class="ground-truth">Expected: <span>${result.ground_truth}</span></div>
-                `;
-                
-                container.appendChild(card);
+                </div>
+                <div class="answer-col">
+                    <div class="pipeline-step step-rag">
+                        <div class="step-icon">2</div>
+                        <div class="step-content">
+                            <div class="step-label">With RAG ${ragBadge}</div>
+                            <div class="step-body">${escHtml(data.rag_answer)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        if (gtHtml) {
+            card.insertAdjacentHTML('beforeend', gtHtml);
+        }
+    }
 
-                // Animate in
-                setTimeout(() => {
-                    card.style.transition = 'opacity 0.3s, transform 0.3s';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
+    // --- Batch mode: run examples one at a time ---
+    async function runAll() {
+        if (runningAll) return;
+        runningAll = true;
+
+        // Reset
+        scores = { noRag: 0, rag: 0, total: 0 };
+        questionNumber = 0;
+        document.getElementById('result-area').innerHTML = '';
+        const empty = document.getElementById('empty-state');
+        if (empty) empty.style.display = 'none';
+        updateScoreBar();
+
+        const btn = document.getElementById('run-all-btn');
+        btn.disabled = true;
+        btn.textContent = 'Running...';
+
+        const input = document.getElementById('question-input');
+
+        for (let i = 0; i < exampleQuestions.length; i++) {
+            const eq = exampleQuestions[i];
+            input.value = eq.question;
+            const chip = document.getElementById(`chip-${i}`);
+            if (chip) chip.classList.add('used');
+            await askQuestion(eq.ground_truth);
+        }
+
+        input.value = '';
+        btn.disabled = false;
+        btn.textContent = 'Run All Examples';
+        runningAll = false;
+    }
+
+    // --- Score bar ---
+    function updateScoreBar() {
+        const bar = document.getElementById('score-bar');
+        bar.classList.add('visible');
+        const n = scores.total;
+        document.getElementById('score-count').textContent = n;
+
+        const noRagPct = n ? Math.round(100 * scores.noRag / n) : 0;
+        const ragPct = n ? Math.round(100 * scores.rag / n) : 0;
+
+        const noRagEl = document.getElementById('score-no-rag');
+        const ragEl = document.getElementById('score-rag');
+
+        noRagEl.textContent = `${noRagPct}%`;
+        ragEl.textContent = `${ragPct}%`;
+
+        noRagEl.className = `score-value ${noRagPct >= ragPct ? 'high' : 'low'}`;
+        ragEl.className = `score-value ${ragPct >= noRagPct ? 'high' : 'low'}`;
+    }
+
+    // --- Utility ---
+    function escHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+    }
+
+    function resetResults(message) {
+        scores = { noRag: 0, rag: 0, total: 0 };
+        questionNumber = 0;
+        document.getElementById('result-area').innerHTML =
+            `<div class="empty-state">${message}</div>`;
+        document.getElementById('score-bar').classList.remove('visible');
+    }
+
+    // --- Document panel ---
+    function toggleDocPanel() {
+        const body = document.getElementById('doc-body');
+        const toggle = document.getElementById('doc-toggle');
+        body.classList.toggle('open');
+        toggle.classList.toggle('open');
+    }
+
+    function triggerFilePicker() {
+        const input = document.getElementById('doc-file-input');
+        if (input) input.click();
+    }
+
+    function setupDropZone() {
+        const drop = document.getElementById('doc-dropzone');
+        const input = document.getElementById('doc-file-input');
+        if (!drop || !input) return;
+
+        drop.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            drop.classList.add('drag');
+        });
+        drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+        drop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            drop.classList.remove('drag');
+            const file = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (file) uploadDocumentFile(file);
+        });
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (file) uploadDocumentFile(file);
+            input.value = '';
+        });
+    }
+
+    async function loadDocInfo() {
+        try {
+            const resp = await fetch('/api/document');
+            const data = await resp.json();
+            updateDocInfo(data);
+        } catch (e) { console.error(e); }
+    }
+
+    function updateDocInfo(data) {
+        const badge = document.getElementById('doc-badge');
+        const preview = document.getElementById('doc-preview');
+        const pageInfo = data.page_count ? `, ${data.page_count} pages` : '';
+        const summaryInfo = data.summarized ? ', summarized' : '';
+        badge.textContent = data.is_custom
+            ? `Custom (${data.sentence_count} sentences${pageInfo}${summaryInfo})`
+            : `Default (${data.sentence_count} sentences${pageInfo})`;
+        preview.textContent = data.preview;
+
+        // Show/hide examples when using custom doc (no ground truth)
+        const exArea = document.getElementById('examples-area');
+        exArea.style.display = data.is_custom ? 'none' : '';
+    }
+
+    async function uploadDocument() {
+        const textarea = document.getElementById('doc-textarea');
+        const text = textarea.value.trim();
+        const status = document.getElementById('doc-status');
+        const fileName = document.getElementById('doc-file-name');
+        if (!text) { status.textContent = 'Paste some text first.'; return; }
+
+        status.textContent = 'Processing...';
+        try {
+            const params = buildParams();
+            const resp = await fetch(`/api/document?${params.toString()}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text }),
             });
-        }
+            const data = await resp.json();
+            if (data.error) { status.textContent = data.error; return; }
+            updateDocInfo(data);
+            textarea.value = '';
+            if (fileName) fileName.textContent = '';
+            if (data.summary_error) {
+                status.textContent = data.summary_error;
+            } else if (data.summarized) {
+                status.textContent = 'Document summarized for retrieval.';
+            } else {
+                status.textContent = 'Document loaded!';
+            }
 
-        function updateAccuracy(elementId, accuracy, otherAccuracy) {
-            const element = document.getElementById(elementId);
-            const percentage = Math.round(accuracy * 100);
-            
-            // Determine if this is higher or lower
-            const isHigher = accuracy >= otherAccuracy;
-            element.className = `accuracy-value ${isHigher ? 'high' : 'low'}`;
-            
-            // Animate the number
-            let current = 0;
-            const increment = percentage / 20;
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= percentage) {
-                    current = percentage;
-                    clearInterval(timer);
-                }
-                element.textContent = `${Math.round(current)}%`;
-            }, 50);
-        }
-    </script>
+            resetResults('Document updated. Ask a question about your new text.');
+        } catch (e) { status.textContent = 'Error: ' + e.message; }
+    }
+
+    async function uploadDocumentFile(file) {
+        const status = document.getElementById('doc-status');
+        const fileName = document.getElementById('doc-file-name');
+        if (!file) return;
+
+        if (fileName) fileName.textContent = file.name;
+        status.textContent = 'Uploading...';
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const params = buildParams();
+            const resp = await fetch(`/api/document/file?${params.toString()}`, {
+                method: 'POST',
+                body: form,
+            });
+            const data = await resp.json();
+            if (data.error) { status.textContent = data.error; return; }
+            updateDocInfo(data);
+            document.getElementById('doc-textarea').value = '';
+
+            if (data.summary_error) {
+                status.textContent = data.summary_error;
+            } else if (data.summarized) {
+                status.textContent = `Summarized ${data.page_count} pages for retrieval.`;
+            } else if (data.page_count) {
+                status.textContent = `Loaded ${data.page_count} pages.`;
+            } else {
+                status.textContent = 'Document loaded!';
+            }
+            resetResults('Document updated. Ask a question about your new text.');
+        } catch (e) { status.textContent = 'Error: ' + e.message; }
+    }
+
+    async function resetDocument() {
+        const status = document.getElementById('doc-status');
+        const fileName = document.getElementById('doc-file-name');
+        status.textContent = 'Resetting...';
+        try {
+            const resp = await fetch('/api/document/reset', { method: 'POST' });
+            const data = await resp.json();
+            updateDocInfo(data);
+            status.textContent = 'Reset to default.';
+            document.getElementById('doc-textarea').value = '';
+            if (fileName) fileName.textContent = '';
+
+            resetResults('Ask a question or click an example to see RAG in action.');
+            renderChips();
+        } catch (e) { status.textContent = 'Error: ' + e.message; }
+    }
+
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', () => {
+        onProviderChange();
+        loadExamples();
+        loadDocInfo();
+        setupDropZone();
+    });
+</script>
 </body>
 </html>

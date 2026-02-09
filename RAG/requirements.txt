@@ -1,3 +1,8 @@
-numpy
-requests
 flask
+numpy
+python-dotenv
+requests
+scikit-learn
+pypdf
+python-docx
+sentence-transformers
