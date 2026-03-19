@@ -1,10 +1,18 @@
 services:
+  # ── Option A: Docker deployment (recommended) ──────────────────────────────
+  # Render builds the image from RAG/Dockerfile and runs the container.
+  # The start command below matches the Dockerfile CMD and is shown here
+  # explicitly so it's easy to find and override if needed.
   - type: web
     name: rag-demo
     env: docker
-    # Path to the Docker build context and Dockerfile relative to the repo root
+    # Path to the Docker build context relative to the repo root
     dockerContext: RAG
     dockerfilePath: RAG/Dockerfile
+    # Gunicorn start command — replaces the Dockerfile CMD when set here.
+    # Render injects $PORT at runtime; default fallback (5000) is in ENV PORT
+    # in the Dockerfile so local `docker run -p 5000:5000` still works.
+    startCommand: gunicorn --bind "0.0.0.0:$PORT" --workers 2 --timeout 120 app:app
     # Render automatically injects the PORT environment variable
     envVars:
       # Embedding / retrieval settings (non-secret — safe to commit defaults)
@@ -31,3 +39,39 @@ services:
         sync: false
       - key: MINIMAX_API_KEY
         sync: false
+
+# ── Option B: Native Python deployment (no Docker) ─────────────────────────
+# Uncomment and rename this block (and comment out Option A) if you prefer
+# Render's managed Python runtime instead of Docker.
+#
+#  - type: web
+#    name: rag-demo
+#    env: python
+#    rootDir: RAG
+#    buildCommand: pip install -r requirements.txt
+#    # Start command for native Python deployment — run from the RAG/ root dir.
+#    # Gunicorn resolves app:app relative to the rag_demo/ package directory.
+#    startCommand: cd rag_demo && gunicorn --bind "0.0.0.0:$PORT" --workers 2 --timeout 120 app:app
+#    envVars:
+#      - key: EMBEDDING_MODEL
+#        value: BAAI/bge-small-en-v1.5
+#      - key: EMBEDDING_QUERY_PREFIX
+#        value: ""
+#      - key: RERANKER_ENABLED
+#        value: "true"
+#      - key: RERANKER_MODEL
+#        value: cross-encoder/ms-marco-MiniLM-L-6-v2
+#      - key: OPENAI_API_KEY
+#        sync: false
+#      - key: ANTHROPIC_API_KEY
+#        sync: false
+#      - key: GOOGLE_API_KEY
+#        sync: false
+#      - key: DEEPSEEK_API_KEY
+#        sync: false
+#      - key: GROQ_API_KEY
+#        sync: false
+#      - key: TOGETHER_API_KEY
+#        sync: false
+#      - key: MINIMAX_API_KEY
+#        sync: false

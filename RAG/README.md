@@ -26,6 +26,8 @@ Then open http://localhost:5000 in your browser.
 
 The repository includes a `render.yaml` for one-click deployment.
 
+#### Using the Blueprint (recommended)
+
 1. Push this repository to GitHub (or fork it).
 2. In the [Render dashboard](https://dashboard.render.com/), click **New → Blueprint** and connect your repo.
 3. Render will detect `render.yaml` and create the `rag-demo` web service automatically.
@@ -34,7 +36,27 @@ The repository includes a `render.yaml` for one-click deployment.
 
 > **Note:** Render injects a `PORT` environment variable at runtime. The app (via Gunicorn) automatically binds to that port, so no manual port configuration is needed.
 
-### Web UI (Local)
+#### Manual setup / "What is the start command?"
+
+If you create the service manually in the Render dashboard, use these settings:
+
+| Field | Value |
+|-------|-------|
+| **Environment** | Docker |
+| **Dockerfile path** | `RAG/Dockerfile` |
+| **Docker context** | `RAG` |
+| **Start Command** | `gunicorn --bind "0.0.0.0:$PORT" --workers 2 --timeout 120 app:app` |
+
+For a **native Python** (non-Docker) service instead:
+
+| Field | Value |
+|-------|-------|
+| **Environment** | Python |
+| **Root directory** | `RAG` |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `cd rag_demo && gunicorn --bind "0.0.0.0:$PORT" --workers 2 --timeout 120 app:app` |
+
+### Local Development (Without Docker)
 ```bash
 pip install -r requirements.txt
 cd rag_demo
