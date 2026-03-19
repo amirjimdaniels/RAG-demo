@@ -4,7 +4,25 @@ A simple demonstration of Retrieval Augmented Generation (RAG) comparing retriev
 
 ## 🚀 Quick Start
 
-### Web UI (Recommended)
+### Docker (Recommended)
+```bash
+# Build the image (run from the RAG/ directory)
+docker build -t rag-demo .
+
+# Run with the dummy LLM (no API key required)
+docker run -p 5000:5000 rag-demo
+```
+
+To pass API keys at runtime, supply them as environment variables:
+```bash
+docker run -p 5000:5000 \
+  -e OPENAI_API_KEY=your_key \
+  rag-demo
+```
+
+Then open http://localhost:5000 in your browser.
+
+### Web UI (Local)
 ```bash
 pip install -r requirements.txt
 cd rag_demo
