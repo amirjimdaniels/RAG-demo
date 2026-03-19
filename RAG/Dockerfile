@@ -30,9 +30,10 @@ WORKDIR /app/rag_demo
 
 EXPOSE 5000
 
-# Bind to 0.0.0.0 so the port is reachable outside the container
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=5000
-ENV FLASK_DEBUG=false
+# Bind to 0.0.0.0 and respect Render's dynamic $PORT (default 5000 for local use)
+ENV PORT=5000
 
-CMD ["python", "app.py"]
+# Use Gunicorn as the production WSGI server
+# --workers: parallel worker processes (adjust based on available CPUs)
+# --timeout: allow extra time for model loading on first request
+CMD gunicorn --bind "0.0.0.0:${PORT}" --workers 2 --timeout 120 app:app

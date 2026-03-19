@@ -22,6 +22,18 @@ docker run -p 5000:5000 \
 
 Then open http://localhost:5000 in your browser.
 
+### Deploy to Render
+
+The repository includes a `render.yaml` for one-click deployment.
+
+1. Push this repository to GitHub (or fork it).
+2. In the [Render dashboard](https://dashboard.render.com/), click **New → Blueprint** and connect your repo.
+3. Render will detect `render.yaml` and create the `rag-demo` web service automatically.
+4. Set your LLM API keys in **Environment → Environment Variables** in the Render dashboard (e.g. `OPENAI_API_KEY`). The app works without any key using the built-in dummy LLM.
+5. Click **Deploy** — the app will be live at the URL Render assigns.
+
+> **Note:** Render injects a `PORT` environment variable at runtime. The app (via Gunicorn) automatically binds to that port, so no manual port configuration is needed.
+
 ### Web UI (Local)
 ```bash
 pip install -r requirements.txt
